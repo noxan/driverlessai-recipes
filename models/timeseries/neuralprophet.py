@@ -57,7 +57,7 @@ class NeuralProphetModel(CustomTimeSeriesModel):
             "%s/cmdstanpy-0.9.5%s" % (_root_path, _suffix),
             "%s/pystan-2.19.1.1%s" % (_root_path, _suffix),
             "%s/httpstan-4.5.0%s" % (_root_path, _suffix),
-            "%s/fbprophet-0.7.1%s" % (_root_path, _suffix),
+            "%s/neuralprophet-0.5.3%s" % (_root_path, _suffix),
         ]
     else:
         _modules_needed_by_name = [
@@ -65,7 +65,7 @@ class NeuralProphetModel(CustomTimeSeriesModel):
             "convertdate",
             "lunarcalendar",
             "pystan==2.19.1.1",
-            "fbprophet==0.7.1",
+            "neuralprophet==0.5.3",
         ]
 
     def set_default_params(
