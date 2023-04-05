@@ -1,9 +1,5 @@
-"""Prophet by Facebook for TimeSeries with an example of parameter mutation."""
+"""NeuralProphet for TimeSeries with an example of parameter mutation."""
 
-"""
-This recipe is disabled, please use the multi-task version named fb_prophet_parallel.py
-that is faster
-"""
 import importlib
 import datatable as dt
 import numpy as np
@@ -29,12 +25,12 @@ class suppress_stdout_stderr(object):
             os.close(fd)
 
 
-class FBProphetModel(CustomTimeSeriesModel):
+class NeuralProphetModel(CustomTimeSeriesModel):
     _regression = True
     _binary = False
     _multiclass = False
-    _display_name = "FB_Prophet"
-    _description = "Facebook Prophet TimeSeries forecasting"
+    _display_name = "NeuralProphet"
+    _description = "NeuralProphet TimeSeries forecasting"
     _testing_can_skip_failure = False  # ensure tested as if shouldn't fail
 
     @staticmethod
