@@ -55,21 +55,26 @@ class FBProphetModel(CustomTimeSeriesModel):
         _root_path = "https://s3.amazonaws.com/artifacts.h2o.ai/deps/dai/recipes"
         _suffix = "-cp38-cp38-linux_x86_64.whl"
         _modules_needed_by_name = [
-            '%s/setuptools_git-1.2%s' % (_root_path, _suffix),
-            '%s/LunarCalendar-0.0.9%s' % (_root_path, _suffix),
-            '%s/ephem-3.7.7.1%s' % (_root_path, _suffix),
-            '%s/cmdstanpy-0.9.5%s' % (_root_path, _suffix),
-            '%s/pystan-2.19.1.1%s' % (_root_path, _suffix),
-            '%s/httpstan-4.5.0%s' % (_root_path, _suffix),
-            '%s/fbprophet-0.7.1%s' % (_root_path, _suffix),
+            "%s/setuptools_git-1.2%s" % (_root_path, _suffix),
+            "%s/LunarCalendar-0.0.9%s" % (_root_path, _suffix),
+            "%s/ephem-3.7.7.1%s" % (_root_path, _suffix),
+            "%s/cmdstanpy-0.9.5%s" % (_root_path, _suffix),
+            "%s/pystan-2.19.1.1%s" % (_root_path, _suffix),
+            "%s/httpstan-4.5.0%s" % (_root_path, _suffix),
+            "%s/fbprophet-0.7.1%s" % (_root_path, _suffix),
         ]
     else:
-        _modules_needed_by_name = ['holidays==0.11.1', 'convertdate', 'lunarcalendar', 'pystan==2.19.1.1',
-                                   'fbprophet==0.7.1']
+        _modules_needed_by_name = [
+            "holidays==0.11.1",
+            "convertdate",
+            "lunarcalendar",
+            "pystan==2.19.1.1",
+            "fbprophet==0.7.1",
+        ]
 
-    def set_default_params(self,
-                           accuracy=None, time_tolerance=None, interpretability=None,
-                           **kwargs):
+    def set_default_params(
+        self, accuracy=None, time_tolerance=None, interpretability=None, **kwargs
+    ):
 
         """
         Parameters available for the model :
@@ -104,57 +109,70 @@ class FBProphetModel(CustomTimeSeriesModel):
             growth=kwargs.get("growth", "linear"),
             seasonality_mode=kwargs.get("seasonality_mode", "additive"),
             country_holidays=kwargs.get("country_holidays", None),
-            weekly_seasonality=kwargs.get("weekly_seasonality", 'auto'),
+            weekly_seasonality=kwargs.get("weekly_seasonality", "auto"),
             monthly_seasonality=kwargs.get("monthly_seasonality", False),
             quarterly_seasonality=kwargs.get("quarterly_seasonality", False),
-            yearly_seasonality=kwargs.get("yearly_seasonality", 'auto'),
+            yearly_seasonality=kwargs.get("yearly_seasonality", "auto"),
         )
 
-    def mutate_params(self,
-                      accuracy=10,
-                      **kwargs):
+    def mutate_params(self, accuracy=10, **kwargs):
 
         logger = None
         if self.context and self.context.experiment_id:
-            logger = make_experiment_logger(experiment_id=self.context.experiment_id, tmp_dir=self.context.tmp_dir,
-                                            experiment_tmp_dir=self.context.experiment_tmp_dir)
+            logger = make_experiment_logger(
+                experiment_id=self.context.experiment_id,
+                tmp_dir=self.context.tmp_dir,
+                experiment_tmp_dir=self.context.experiment_tmp_dir,
+            )
         loggerinfo(logger, "Mutate is called")
 
         # Default version is do no mutation
         # Otherwise, change self.params for this model
         holiday_choice = [None, "US", "UK", "DE", "FRA"]
         if accuracy >= 8:
-            weekly_choice = [False, 'auto', 5, 7, 10, 15]
-            yearly_choice = [False, 'auto', 5, 10, 15, 20, 30]
+            weekly_choice = [False, "auto", 5, 7, 10, 15]
+            yearly_choice = [False, "auto", 5, 10, 15, 20, 30]
             monthly_choice = [False, 3, 5, 7, 10]
             quarterly_choice = [False, 3, 5, 7, 10]
         elif accuracy >= 5:
-            weekly_choice = [False, 'auto', 10, 20]
-            yearly_choice = [False, 'auto', 10, 20]
+            weekly_choice = [False, "auto", 10, 20]
+            yearly_choice = [False, "auto", 10, 20]
             monthly_choice = [False, 5]
             quarterly_choice = [False, 5]
         else:
             # No alternative seasonality, and no seasonality override for weekly and yearly
-            weekly_choice = [False, 'auto']
-            yearly_choice = [False, 'auto']
+            weekly_choice = [False, "auto"]
+            yearly_choice = [False, "auto"]
             monthly_choice = [False]
             quarterly_choice = [False]
 
         self.params["country_holidays"] = np.random.choice(holiday_choice)
-        self.params["seasonality_mode"] = np.random.choice(["additive", "multiplicative"])
+        self.params["seasonality_mode"] = np.random.choice(
+            ["additive", "multiplicative"]
+        )
         self.params["weekly_seasonality"] = np.random.choice(weekly_choice)
         self.params["monthly_seasonality"] = np.random.choice(monthly_choice)
         self.params["quarterly_seasonality"] = np.random.choice(quarterly_choice)
         self.params["yearly_seasonality"] = np.random.choice(yearly_choice)
         self.params["growth"] = np.random.choice(["linear", "logistic"])
 
-    def fit(self, X, y, sample_weight=None, eval_set=None, sample_weight_eval_set=None, **kwargs):
+    def fit(
+        self,
+        X,
+        y,
+        sample_weight=None,
+        eval_set=None,
+        sample_weight_eval_set=None,
+        **kwargs
+    ):
 
         # Get TGC and time column
-        self.tgc = self.params_base.get('tgc')
-        self.time_column = self.params_base.get('time_column')
+        self.tgc = self.params_base.get("tgc")
+        self.time_column = self.params_base.get("time_column")
         nan_value = np.mean(y)
-        cap = np.max(y) * 1.5  # TODO Don't like this we should compute a cap from average yearly growth
+        cap = (
+            np.max(y) * 1.5
+        )  # TODO Don't like this we should compute a cap from average yearly growth
         prior = np.mean(y)
 
         if self.time_column is None:
@@ -165,8 +183,11 @@ class FBProphetModel(CustomTimeSeriesModel):
         # Can use loggerwarning, loggererror, etc. for different levels
         logger = None
         if self.context and self.context.experiment_id:
-            logger = make_experiment_logger(experiment_id=self.context.experiment_id, tmp_dir=self.context.tmp_dir,
-                                            experiment_tmp_dir=self.context.experiment_tmp_dir)
+            logger = make_experiment_logger(
+                experiment_id=self.context.experiment_id,
+                tmp_dir=self.context.tmp_dir,
+                experiment_tmp_dir=self.context.experiment_tmp_dir,
+            )
         loggerinfo(logger, "Start Fitting Prophet with params : {}".format(self.params))
 
         # Reduce to TimeGroupColumns
@@ -178,7 +199,7 @@ class FBProphetModel(CustomTimeSeriesModel):
 
         XX = XX.replace([None, np.nan], 0)
         XX.rename(columns={self.time_column: "ds"}, inplace=True)
-        XX['y'] = np.array(y)
+        XX["y"] = np.array(y)
 
         # Compute groups
         # Group the input by TGC (Time group column) excluding the time column itself
@@ -192,7 +213,7 @@ class FBProphetModel(CustomTimeSeriesModel):
         priors = {}
         models = {}
 
-        mod = importlib.import_module('fbprophet')
+        mod = importlib.import_module("fbprophet")
         Prophet = getattr(mod, "Prophet")
 
         # Fit 1 FB Prophet model per time group columns
@@ -200,10 +221,14 @@ class FBProphetModel(CustomTimeSeriesModel):
         for _i_g, (key, X) in enumerate(XX_grp):
             # Just log where we are in the fitting process
             if (_i_g + 1) % max(1, nb_groups // 20) == 0:
-                loggerinfo(logger, "FB Prophet Model : %d%% of groups fitted" % (100 * (_i_g + 1) // nb_groups))
+                loggerinfo(
+                    logger,
+                    "FB Prophet Model : %d%% of groups fitted"
+                    % (100 * (_i_g + 1) // nb_groups),
+                )
 
             key = key if isinstance(key, list) else [key]
-            grp_hash = '_'.join(map(str, key))
+            grp_hash = "_".join(map(str, key))
 
             # Fit current model and prior
             model = Prophet(growth=self.params["growth"])
@@ -211,9 +236,17 @@ class FBProphetModel(CustomTimeSeriesModel):
             if self.params["country_holidays"] is not None:
                 model.add_country_holidays(country_name=self.params["country_holidays"])
             if self.params["monthly_seasonality"]:
-                model.add_seasonality(name='monthly', period=30.5, fourier_order=self.params["monthly_seasonality"])
+                model.add_seasonality(
+                    name="monthly",
+                    period=30.5,
+                    fourier_order=self.params["monthly_seasonality"],
+                )
             if self.params["quarterly_seasonality"]:
-                model.add_seasonality(name='quarterly', period=92, fourier_order=self.params["quarterly_seasonality"])
+                model.add_seasonality(
+                    name="quarterly",
+                    period=92,
+                    fourier_order=self.params["quarterly_seasonality"],
+                )
 
             with suppress_stdout_stderr():
                 if X.shape[0] < 20:
@@ -221,41 +254,39 @@ class FBProphetModel(CustomTimeSeriesModel):
                 else:
                     if self.params["growth"] == "logistic":
                         X["cap"] = cap
-                        model.fit(X[['ds', 'y', 'cap']])
+                        model.fit(X[["ds", "y", "cap"]])
                     else:
-                        model.fit(X[['ds', 'y']])
+                        model.fit(X[["ds", "y"]])
 
             models[grp_hash] = model
-            priors[grp_hash] = X['y'].mean()
+            priors[grp_hash] = X["y"].mean()
 
         self.set_model_properties(
-            model={
-                'models': models,
-                'cap': cap,
-                'priors': priors,
-                'prior': prior
-            },
+            model={"models": models, "cap": cap, "priors": priors, "prior": prior},
             features=self.tgc,  # Prophet uses time and timegroups
             importances=np.ones(len(self.tgc)),
-            iterations=-1  # Does not have iterations
+            iterations=-1,  # Does not have iterations
         )
 
     def predict(self, X, **kwargs):
 
         model_config, _, _, _ = self.get_model_properties()
 
-        models = model_config['models']
-        cap = model_config['cap']
-        priors = model_config['priors']
-        prior = model_config['prior']
+        models = model_config["models"]
+        cap = model_config["cap"]
+        priors = model_config["priors"]
+        prior = model_config["prior"]
 
         if self.tgc is None or not all([x in X.names for x in self.tgc]):
             return np.ones(X.shape[0]) * self.nan_value
 
         logger = None
         if self.context and self.context.experiment_id:
-            logger = make_experiment_logger(experiment_id=self.context.experiment_id, tmp_dir=self.context.tmp_dir,
-                                            experiment_tmp_dir=self.context.experiment_tmp_dir)
+            logger = make_experiment_logger(
+                experiment_id=self.context.experiment_id,
+                tmp_dir=self.context.tmp_dir,
+                experiment_tmp_dir=self.context.experiment_tmp_dir,
+            )
         loggerinfo(logger, "Start Predicting with Prophet")
 
         # Reduce to TimeGroupColumns
@@ -286,10 +317,14 @@ class FBProphetModel(CustomTimeSeriesModel):
         for _i_g, (key, X) in enumerate(XX_grp):
             # Just log where we are in the fitting process
             if (_i_g + 1) % max(1, nb_groups // 20) == 0:
-                loggerinfo(logger, "FB Prophet Model : %d%% of groups transformed" % (100 * (_i_g + 1) // nb_groups))
+                loggerinfo(
+                    logger,
+                    "FB Prophet Model : %d%% of groups transformed"
+                    % (100 * (_i_g + 1) // nb_groups),
+                )
 
             key = key if isinstance(key, list) else [key]
-            grp_hash = '_'.join(map(str, key))
+            grp_hash = "_".join(map(str, key))
 
             # Facebook Prophet returns the predictions ordered by time
             # So we should keep track of the time order for each group so that
@@ -304,21 +339,27 @@ class FBProphetModel(CustomTimeSeriesModel):
                     XX = yhat
                 else:
                     if grp_hash in priors.keys():
-                        XX = pd.DataFrame(np.full((X.shape[0], 1), priors[grp_hash]), columns=['yhat'])
+                        XX = pd.DataFrame(
+                            np.full((X.shape[0], 1), priors[grp_hash]), columns=["yhat"]
+                        )
                     else:
                         # This should not happen
                         loggerinfo(logger, "Group in models but not in priors")
-                        XX = pd.DataFrame(np.full((X.shape[0], 1), prior), columns=['yhat'])
+                        XX = pd.DataFrame(
+                            np.full((X.shape[0], 1), prior), columns=["yhat"]
+                        )
             else:
                 # print("No Group")
-                XX = pd.DataFrame(np.full((X.shape[0], 1), prior), columns=['yhat'])  # unseen groups
+                XX = pd.DataFrame(
+                    np.full((X.shape[0], 1), prior), columns=["yhat"]
+                )  # unseen groups
 
             # Reorder the index like prophet re-ordered the predictions
             XX.index = X.index[order]
             # print("Transformed Output for Group")
             # print(XX.sort_index().head(20), flush=True)
-            preds.append(XX[['yhat']])
+            preds.append(XX[["yhat"]])
 
         XX = pd.concat(tuple(preds), axis=0).sort_index()
 
-        return XX['yhat'].values
+        return XX["yhat"].values
