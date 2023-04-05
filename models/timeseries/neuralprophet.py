@@ -5,6 +5,7 @@ import datatable as dt
 import numpy as np
 from h2oaicore.models import CustomTimeSeriesModel
 from h2oaicore.systemutils import make_experiment_logger, loggerinfo
+from h2oaicore.systemutils_more import arch_type
 import os
 import pandas as pd
 
@@ -35,8 +36,7 @@ class NeuralProphetModel(CustomTimeSeriesModel):
 
     @staticmethod
     def is_enabled():
-        # Please use Prophet recipe in parallel mode : fb_prophet_parallel.py
-        return False
+        return not (arch_type == "ppc64le")
 
     @staticmethod
     def can_use(accuracy, interpretability, **kwargs):
